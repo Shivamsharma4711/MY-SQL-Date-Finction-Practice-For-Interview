@@ -1,0 +1,677 @@
+<!DOCTYPE html>
+<html lang="hi">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>SQL Date Lab — Date Functions Practice</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,600;9..144,700&family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#0F2427;
+    --surface:#173538;
+    --surface-alt:#1F4245;
+    --line:#2C5256;
+    --ink:#EDEFE9;
+    --ink-dim:#9FC1BE;
+    --accent:#E3B23C;
+    --accent-ink:#0F2427;
+    --good:#7FB77E;
+    --bad:#E17E7E;
+    --code-bg:#0A1B1D;
+    --radius:4px;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Inter',system-ui,sans-serif;
+    line-height:1.5;
+    padding-bottom:60px;
+  }
+  .wrap{max-width:640px;margin:0 auto;padding:0 16px;}
+
+  header.top{
+    padding:22px 16px 16px;
+    border-bottom:1px solid var(--line);
+  }
+  header.top h1{
+    font-family:'Fraunces',serif;
+    font-weight:700;
+    font-size:26px;
+    margin:0 0 4px;
+    letter-spacing:0.2px;
+  }
+  header.top p{
+    margin:0;
+    color:var(--ink-dim);
+    font-size:14px;
+  }
+
+  .cats{
+    display:flex;
+    gap:8px;
+    overflow-x:auto;
+    padding:14px 16px;
+    border-bottom:1px solid var(--line);
+    -webkit-overflow-scrolling:touch;
+  }
+  .cats::-webkit-scrollbar{display:none;}
+  .cat-chip{
+    flex:0 0 auto;
+    padding:6px 12px;
+    border:1px solid var(--line);
+    border-radius:999px;
+    font-size:12.5px;
+    color:var(--ink-dim);
+    background:var(--surface);
+    cursor:pointer;
+    white-space:nowrap;
+  }
+  .cat-chip.active{
+    background:var(--accent);
+    color:var(--accent-ink);
+    border-color:var(--accent);
+    font-weight:600;
+  }
+
+  .daybox{
+    display:flex;
+    align-items:flex-end;
+    gap:14px;
+    padding:20px 16px 6px;
+  }
+  .daynum{
+    font-family:'Fraunces',serif;
+    font-size:52px;
+    font-weight:700;
+    line-height:0.8;
+    color:var(--accent);
+  }
+  .daymeta{padding-bottom:4px;}
+  .daymeta .of{color:var(--ink-dim);font-size:13px;}
+  .daymeta .tag{
+    display:inline-block;
+    margin-top:4px;
+    font-size:11.5px;
+    letter-spacing:0.3px;
+    padding:2px 8px;
+    background:var(--surface-alt);
+    border:1px solid var(--line);
+    border-radius:3px;
+    color:var(--ink);
+  }
+
+  .card{
+    margin:14px 16px 0;
+    padding:16px;
+    background:var(--surface);
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+  }
+  .prompt{font-size:16px;font-weight:500;margin:0;}
+
+  .toggles{display:flex;gap:8px;margin:12px 16px 0;flex-wrap:wrap;}
+  .toggle-btn{
+    background:none;
+    border:1px solid var(--line);
+    color:var(--ink-dim);
+    padding:7px 12px;
+    border-radius:3px;
+    font-size:13px;
+    cursor:pointer;
+  }
+  .toggle-btn:active{background:var(--surface-alt);}
+
+  .panel{
+    margin:10px 16px 0;
+    padding:12px 14px;
+    background:var(--surface-alt);
+    border:1px dashed var(--line);
+    border-radius:var(--radius);
+    font-size:13.5px;
+    color:var(--ink-dim);
+    display:none;
+  }
+  .panel.show{display:block;}
+  .panel code, .panel .col-name{
+    color:var(--accent);
+    font-family:'IBM Plex Mono',monospace;
+  }
+  .schema-table{width:100%;border-collapse:collapse;margin-top:8px;font-family:'IBM Plex Mono',monospace;font-size:12px;}
+  .schema-table td{padding:3px 6px;border-bottom:1px solid var(--line);}
+
+  textarea#query{
+    width:100%;
+    margin-top:12px;
+    background:var(--code-bg);
+    color:#DCEFE9;
+    border:1px solid var(--line);
+    border-radius:var(--radius);
+    font-family:'IBM Plex Mono',monospace;
+    font-size:14.5px;
+    padding:12px;
+    min-height:88px;
+    resize:vertical;
+  }
+  textarea#query:focus{outline:1px solid var(--accent);}
+
+  .actions{display:flex;gap:10px;margin-top:10px;flex-wrap:wrap;}
+  .btn{
+    flex:1;
+    min-width:110px;
+    padding:11px 14px;
+    border-radius:3px;
+    border:none;
+    font-size:14.5px;
+    font-weight:600;
+    cursor:pointer;
+  }
+  .btn-primary{background:var(--accent);color:var(--accent-ink);}
+  .btn-secondary{background:none;border:1px solid var(--line);color:var(--ink);}
+  .btn:active{transform:translateY(1px);}
+
+  .verdict{
+    margin:14px 16px 0;
+    padding:12px 14px;
+    border-radius:var(--radius);
+    font-weight:600;
+    font-size:14.5px;
+    display:none;
+  }
+  .verdict.show{display:block;}
+  .verdict.ok{background:rgba(127,183,126,0.15);border:1px solid var(--good);color:var(--good);}
+  .verdict.no{background:rgba(225,126,126,0.15);border:1px solid var(--bad);color:var(--bad);}
+  .verdict.err{background:rgba(225,126,126,0.1);border:1px solid var(--bad);color:var(--bad);font-family:'IBM Plex Mono',monospace;font-weight:400;font-size:13px;}
+
+  .result-block{margin:12px 16px 0;}
+  .result-block h4{
+    font-size:12px;
+    text-transform:none;
+    color:var(--ink-dim);
+    margin:0 0 6px;
+    font-weight:600;
+  }
+  .table-scroll{overflow-x:auto;border:1px solid var(--line);border-radius:var(--radius);}
+  table.out{border-collapse:collapse;width:100%;font-family:'IBM Plex Mono',monospace;font-size:12.5px;}
+  table.out th{
+    background:var(--surface-alt);
+    color:var(--accent);
+    text-align:left;
+    padding:7px 10px;
+    white-space:nowrap;
+    border-bottom:1px solid var(--line);
+  }
+  table.out td{
+    padding:6px 10px;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+    color:var(--ink);
+  }
+  table.out tr:last-child td{border-bottom:none;}
+
+  .answer-sql{
+    font-family:'IBM Plex Mono',monospace;
+    font-size:13.5px;
+    background:var(--code-bg);
+    padding:10px 12px;
+    border-radius:var(--radius);
+    white-space:pre-wrap;
+    word-break:break-word;
+    color:#DCEFE9;
+  }
+
+  .navrow{
+    display:flex;
+    gap:10px;
+    margin:20px 16px 0;
+  }
+  .navrow .btn{background:var(--surface);border:1px solid var(--line);color:var(--ink);}
+
+  footer.stats{
+    margin:24px 16px 0;
+    padding:14px 16px;
+    border-top:1px solid var(--line);
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    font-size:13px;
+    color:var(--ink-dim);
+  }
+  footer.stats .reset{
+    background:none;border:none;color:var(--ink-dim);
+    text-decoration:underline;font-size:12.5px;cursor:pointer;
+  }
+
+  .loading{padding:40px 16px;text-align:center;color:var(--ink-dim);font-size:14px;}
+</style>
+</head>
+<body>
+
+<div class="wrap">
+  <header class="top">
+    <h1>SQL Date Lab</h1>
+    <p>Date &amp; time functions practice — YEAR, MONTH, DAYNAME, QUARTER, DATE_FORMAT, DATEDIFF, EXTRACT aur aur bhi</p>
+  </header>
+
+  <div class="cats" id="cats"></div>
+
+  <div id="loading" class="loading">SQL engine load ho raha hai...</div>
+
+  <div id="app" style="display:none;">
+    <div class="daybox">
+      <div class="daynum" id="qnum">01</div>
+      <div class="daymeta">
+        <div class="of" id="qof">of 26</div>
+        <div class="tag" id="qcat">YEAR()</div>
+      </div>
+    </div>
+
+    <div class="card">
+      <p class="prompt" id="qprompt">—</p>
+    </div>
+
+    <div class="toggles">
+      <button class="toggle-btn" id="btnSchema">📋 Schema dekho</button>
+      <button class="toggle-btn" id="btnHint">💡 Hint</button>
+    </div>
+
+    <div class="panel" id="panelSchema">
+      <strong>Table: orders</strong>
+      <table class="schema-table">
+        <tr><td class="col-name">order_id</td><td>INTEGER</td></tr>
+        <tr><td class="col-name">customer_name</td><td>TEXT</td></tr>
+        <tr><td class="col-name">city</td><td>TEXT</td></tr>
+        <tr><td class="col-name">order_date</td><td>DATE — 'YYYY-MM-DD'</td></tr>
+        <tr><td class="col-name">order_datetime</td><td>DATETIME — 'YYYY-MM-DD HH:MM:SS'</td></tr>
+        <tr><td class="col-name">delivery_date</td><td>DATE — 'YYYY-MM-DD'</td></tr>
+        <tr><td class="col-name">amount</td><td>DECIMAL</td></tr>
+      </table>
+    </div>
+
+    <div class="panel" id="panelHint"></div>
+
+    <div class="card" style="margin-top:12px;">
+      <textarea id="query" placeholder="Apni SELECT query yaha likho..." spellcheck="false"></textarea>
+      <div class="actions">
+        <button class="btn btn-primary" id="btnRun">▶ Run Query</button>
+        <button class="btn btn-secondary" id="btnAnswer">Answer dekho</button>
+      </div>
+    </div>
+
+    <div class="verdict" id="verdict"></div>
+
+    <div class="result-block" id="blockYourOutput" style="display:none;">
+      <h4>Tumhara output</h4>
+      <div class="table-scroll" id="yourOutput"></div>
+    </div>
+
+    <div class="result-block" id="blockAnswer" style="display:none;">
+      <h4>Correct query</h4>
+      <div class="answer-sql" id="answerSql"></div>
+      <h4 style="margin-top:10px;">Correct output (compare karo apne se)</h4>
+      <div class="table-scroll" id="answerOutput"></div>
+    </div>
+
+    <div class="navrow">
+      <button class="btn" id="btnPrev">← Pichla</button>
+      <button class="btn" id="btnNext">Agla →</button>
+    </div>
+
+    <footer class="stats">
+      <span id="statsText">0/26 attempt, 0 sahi</span>
+      <button class="reset" id="btnReset">reset karo</button>
+    </footer>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/sql-wasm.js"></script>
+<script>
+/* ---------------- DATA ---------------- */
+const ORDERS = [
+  [1,'Aman Verma','Delhi','2026-01-05','2026-01-05 09:15:00','2026-01-09',1200],
+  [2,'Priya Singh','Mumbai','2026-01-12','2026-01-12 14:40:00','2026-01-14',850],
+  [3,'Rohit Gupta','Faridabad','2026-02-01','2026-02-01 20:05:00','2026-02-10',2400],
+  [4,'Neha Sharma','Pune','2026-02-15','2026-02-15 11:20:00','2026-02-18',560],
+  [5,'Karan Mehta','Delhi','2026-03-08','2026-03-08 19:00:00','2026-03-11',1750],
+  [6,'Simran Kaur','Chandigarh','2026-03-22','2026-03-22 08:30:00','2026-03-24',990],
+  [7,'Vikas Yadav','Noida','2026-04-05','2026-04-05 22:10:00','2026-04-15',3200],
+  [8,'Anjali Rao','Bengaluru','2026-04-18','2026-04-18 13:00:00','2026-04-21',670],
+  [9,'Deepak Nair','Kochi','2026-05-03','2026-05-03 07:45:00','2026-05-06',1430],
+  [10,'Pooja Iyer','Chennai','2026-05-17','2026-05-17 18:25:00','2026-05-19',2100],
+  [11,'Ramesh Joshi','Jaipur','2026-06-07','2026-06-07 21:00:00','2026-06-20',4100],
+  [12,'Sneha Patil','Nagpur','2026-06-21','2026-06-21 10:10:00','2026-06-23',780],
+  [13,'Arjun Malhotra','Delhi','2026-07-05','2026-07-05 23:50:00','2026-07-08',1550],
+  [14,'Isha Kapoor','Lucknow','2026-08-16','2026-08-16 15:15:00','2026-08-25',2900],
+];
+
+/* ---------------- QUESTIONS ---------------- */
+const QUESTIONS = [
+  {cat:'YEAR()', prompt:"Har order ka order_id aur uska order year (YEAR function se) nikaalo.",
+   hint:"YEAR(order_date) ko SELECT list me column ki tarah use karo, jaise: SELECT col, YEAR(date_col) AS alias FROM table;",
+   answer:"SELECT order_id, YEAR(order_date) AS order_year FROM orders;"},
+  {cat:'YEAR()', prompt:"Sirf 2026 me hue saare orders (poori row) dikhao.",
+   hint:"WHERE clause me YEAR(order_date) = 2026 laga do.",
+   answer:"SELECT * FROM orders WHERE YEAR(order_date) = 2026;"},
+
+  {cat:'MONTH()', prompt:"Customer_name ke saath har order ka month number (MONTH function) nikaalo.",
+   hint:"MONTH(order_date) 1-12 ke beech number deta hai.",
+   answer:"SELECT customer_name, MONTH(order_date) AS mon FROM orders;"},
+  {cat:'MONTH()', prompt:"March month (month = 3) ke saare orders dikhao.",
+   hint:"WHERE MONTH(order_date) = 3",
+   answer:"SELECT * FROM orders WHERE MONTH(order_date) = 3;"},
+
+  {cat:'DAY()', prompt:"order_id ke saath order_date ka sirf 'day of month' (DAY function) nikaalo.",
+   hint:"DAY(order_date) us tareek ka number deta hai (1-31).",
+   answer:"SELECT order_id, DAY(order_date) AS day_num FROM orders;"},
+  {cat:'DAY()', prompt:"Jinka order month ki 1 se 10 tareek ke beech hua unhe dikhao (DAY 1-10).",
+   hint:"WHERE DAY(order_date) BETWEEN 1 AND 10",
+   answer:"SELECT * FROM orders WHERE DAY(order_date) BETWEEN 1 AND 10;"},
+
+  {cat:'DAYNAME()', prompt:"Har order kis weekday (din ka naam) hua tha — customer_name ke saath DAYNAME() se dikhao.",
+   hint:"DAYNAME(order_date) 'Monday', 'Sunday' jaisa text deta hai.",
+   answer:"SELECT customer_name, DAYNAME(order_date) AS weekday FROM orders;"},
+  {cat:'DAYNAME()', prompt:"Sirf Sunday ko hue orders dikhao (DAYNAME = 'Sunday').",
+   hint:"WHERE DAYNAME(order_date) = 'Sunday' — quotes lagana mat bhoolna.",
+   answer:"SELECT * FROM orders WHERE DAYNAME(order_date) = 'Sunday';"},
+
+  {cat:'DAYOFWEEK()', prompt:"DAYOFWEEK() use karke har order ka numeric weekday nikaalo (1=Sunday...7=Saturday), order_id ke saath.",
+   hint:"DAYOFWEEK(order_date) MySQL me 1 se 7 tak number deta hai, 1=Sunday.",
+   answer:"SELECT order_id, DAYOFWEEK(order_date) AS dow FROM orders;"},
+  {cat:'DAYOFWEEK()', prompt:"Weekend ke orders dikhao — jaha DAYOFWEEK 1 (Sunday) ya 7 (Saturday) ho.",
+   hint:"WHERE DAYOFWEEK(order_date) IN (1,7)",
+   answer:"SELECT * FROM orders WHERE DAYOFWEEK(order_date) IN (1,7);"},
+
+  {cat:'QUARTER()', prompt:"order_id ke saath har order ka quarter number (Q1-Q4) nikaalo.",
+   hint:"QUARTER(order_date) 1,2,3,4 me se koi ek deta hai.",
+   answer:"SELECT order_id, QUARTER(order_date) AS qtr FROM orders;"},
+  {cat:'QUARTER()', prompt:"Quarter 3 (Jul-Aug-Sep) ke orders dikhao.",
+   hint:"WHERE QUARTER(order_date) = 3",
+   answer:"SELECT * FROM orders WHERE QUARTER(order_date) = 3;"},
+
+  {cat:'WEEK()', prompt:"order_id ke saath order_date ka week-of-year number (WEEK function) nikaalo.",
+   hint:"WEEK(order_date) saal ka week number deta hai (0/1 se shuru).",
+   answer:"SELECT order_id, WEEK(order_date) AS wk FROM orders;"},
+  {cat:'WEEK()', prompt:"Jin orders ka week number 10 se zyada hai unhe dikhao.",
+   hint:"WHERE WEEK(order_date) > 10",
+   answer:"SELECT * FROM orders WHERE WEEK(order_date) > 10;"},
+
+  {cat:'HOUR/MINUTE', prompt:"order_datetime se har order ka HOUR aur MINUTE nikaalo, order_id ke saath.",
+   hint:"HOUR(order_datetime) aur MINUTE(order_datetime) dono ek saath SELECT me likh sakte ho.",
+   answer:"SELECT order_id, HOUR(order_datetime) AS hr, MINUTE(order_datetime) AS mins FROM orders;"},
+  {cat:'HOUR/MINUTE', prompt:"Raat 6 baje (18:00) ke baad hue orders dikhao (HOUR >= 18).",
+   hint:"WHERE HOUR(order_datetime) >= 18",
+   answer:"SELECT * FROM orders WHERE HOUR(order_datetime) >= 18;"},
+
+  {cat:'DATE_FORMAT()', prompt:"order_date ko 'YYYY-MM' format (jaise 2026-09) me dikhao, column naam month_year rakho.",
+   hint:"DATE_FORMAT(order_date, '%Y-%m') AS month_year",
+   answer:"SELECT order_id, DATE_FORMAT(order_date,'%Y-%m') AS month_year FROM orders;"},
+  {cat:'DATE_FORMAT()', prompt:"order_date ko readable format 'DD Mon YYYY' (jaise 05 Sep 2026) me dikhao.",
+   hint:"Format string me %d %b %Y use karo — %b se short month name milta hai.",
+   answer:"SELECT order_id, DATE_FORMAT(order_date,'%d %b %Y') AS pretty_date FROM orders;"},
+  {cat:'DATE_FORMAT()', prompt:"order_date ka sirf full month name + year (jaise September 2026) dikhao.",
+   hint:"%M se full month name milta hai (%b se short milta hai).",
+   answer:"SELECT order_id, DATE_FORMAT(order_date,'%M %Y') AS month_full FROM orders;"},
+
+  {cat:'DATEDIFF()', prompt:"Har order ke liye delivery me kitne din lage — order_date se delivery_date tak DATEDIFF() se nikaalo.",
+   hint:"DATEDIFF(delivery_date, order_date) — pehla argument baada wali date, doosra pehle wali.",
+   answer:"SELECT order_id, DATEDIFF(delivery_date, order_date) AS delivery_days FROM orders;"},
+  {cat:'DATEDIFF()', prompt:"Jin orders ki delivery 5 din se zyada me hui, unhe dikhao.",
+   hint:"WHERE DATEDIFF(delivery_date, order_date) > 5",
+   answer:"SELECT * FROM orders WHERE DATEDIFF(delivery_date, order_date) > 5;"},
+  {cat:'DATEDIFF()', prompt:"Sabse jaldi deliver hui order dikhao — sirf order_id aur delivery_days, ek hi row (sabse kam delivery_days).",
+   hint:"ORDER BY delivery_days ASC LIMIT 1 laga do, DATEDIFF ko ORDER BY me bhi use kar sakte ho.",
+   answer:"SELECT order_id, DATEDIFF(delivery_date, order_date) AS delivery_days FROM orders ORDER BY delivery_days ASC LIMIT 1;"},
+
+  {cat:'EXTRACT()', prompt:"EXTRACT(YEAR FROM order_date) syntax use karke order_id ke saath year nikaalo.",
+   hint:"Standard SQL syntax: EXTRACT(YEAR FROM column_name)",
+   answer:"SELECT order_id, EXTRACT(YEAR FROM order_date) AS yr FROM orders;"},
+  {cat:'EXTRACT()', prompt:"EXTRACT(QUARTER FROM order_date) use karke order_id ke saath quarter nikaalo.",
+   hint:"EXTRACT ke andar YEAR, MONTH, DAY, QUARTER, WEEK, HOUR, MINUTE — sab chalte hain.",
+   answer:"SELECT order_id, EXTRACT(QUARTER FROM order_date) AS qtr FROM orders;"},
+
+  {cat:'GROUP BY + DATE', prompt:"Month-wise total sales nikaalo — MONTH(order_date) se group karke amount ka SUM lo.",
+   hint:"GROUP BY MONTH(order_date), SELECT me MONTH(order_date) aur SUM(amount) dono lo.",
+   answer:"SELECT MONTH(order_date) AS mon, SUM(amount) AS total_sales FROM orders GROUP BY MONTH(order_date);"},
+  {cat:'GROUP BY + DATE', prompt:"Weekday-wise (DAYNAME) kitne orders hain — count karo.",
+   hint:"GROUP BY DAYNAME(order_date), COUNT(*) laga ke.",
+   answer:"SELECT DAYNAME(order_date) AS weekday, COUNT(*) AS total_orders FROM orders GROUP BY DAYNAME(order_date);"},
+];
+
+/* ---------------- STATE ---------------- */
+let db = null;
+let current = 0;
+const attempted = new Set();
+const correct = new Set();
+
+/* ---------------- DATE HELPERS ---------------- */
+function parseD(s){
+  if(s === null || s === undefined) return null;
+  return new Date(String(s).length > 10 ? String(s).replace(' ','T') : String(s)+'T00:00:00');
+}
+const DAY_NAMES = ['Sunday','Monday','Tuesday','Wednesday','Thursday','Friday','Saturday'];
+const MONTH_FULL = ['January','February','March','April','May','June','July','August','September','October','November','December'];
+const MONTH_SHORT = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function fnYear(s){ const d=parseD(s); return d? d.getFullYear(): null; }
+function fnMonth(s){ const d=parseD(s); return d? d.getMonth()+1: null; }
+function fnDay(s){ const d=parseD(s); return d? d.getDate(): null; }
+function fnDayName(s){ const d=parseD(s); return d? DAY_NAMES[d.getDay()]: null; }
+function fnDayOfWeek(s){ const d=parseD(s); return d? d.getDay()+1: null; }
+function fnQuarter(s){ const d=parseD(s); return d? Math.floor(d.getMonth()/3)+1: null; }
+function fnWeek(s){
+  const d = parseD(s); if(!d) return null;
+  const start = new Date(d.getFullYear(),0,1);
+  const diffDays = Math.floor((d-start)/86400000);
+  return Math.ceil((diffDays + start.getDay() + 1) / 7);
+}
+function fnHour(s){ const d=parseD(s); return d? d.getHours(): null; }
+function fnMinute(s){ const d=parseD(s); return d? d.getMinutes(): null; }
+function fnSecond(s){ const d=parseD(s); return d? d.getSeconds(): null; }
+function fnDateDiff(s1,s2){ const d1=parseD(s1), d2=parseD(s2); if(!d1||!d2) return null; return Math.round((d1-d2)/86400000); }
+function fnDateFormat(s, fmt){
+  const d = parseD(s); if(!d) return null;
+  return String(fmt).replace(/%Y|%y|%m|%d|%M|%b|%W|%H|%i|%s/g, (tok)=>{
+    switch(tok){
+      case '%Y': return String(d.getFullYear());
+      case '%y': return String(d.getFullYear()).slice(-2);
+      case '%m': return String(d.getMonth()+1).padStart(2,'0');
+      case '%d': return String(d.getDate()).padStart(2,'0');
+      case '%M': return MONTH_FULL[d.getMonth()];
+      case '%b': return MONTH_SHORT[d.getMonth()];
+      case '%W': return DAY_NAMES[d.getDay()];
+      case '%H': return String(d.getHours()).padStart(2,'0');
+      case '%i': return String(d.getMinutes()).padStart(2,'0');
+      case '%s': return String(d.getSeconds()).padStart(2,'0');
+      default: return tok;
+    }
+  });
+}
+function fnExtractPart(part, s){
+  switch(String(part).toUpperCase()){
+    case 'YEAR': return fnYear(s);
+    case 'MONTH': return fnMonth(s);
+    case 'DAY': return fnDay(s);
+    case 'QUARTER': return fnQuarter(s);
+    case 'WEEK': return fnWeek(s);
+    case 'HOUR': return fnHour(s);
+    case 'MINUTE': return fnMinute(s);
+    case 'SECOND': return fnSecond(s);
+    default: return null;
+  }
+}
+
+/* Rewrite EXTRACT(PART FROM col) -> EXTRACTPART('PART', col) so SQLite can parse it */
+function preprocess(sql){
+  return sql.replace(/EXTRACT\s*\(\s*(\w+)\s+FROM\s+([^)]+)\)/gi, "EXTRACTPART('$1', $2)");
+}
+
+/* ---------------- DB INIT ---------------- */
+initSqlJs({ locateFile: f => `https://cdnjs.cloudflare.com/ajax/libs/sql.js/1.10.3/${f}` }).then(SQL => {
+  db = new SQL.Database();
+  db.run(`CREATE TABLE orders (
+    order_id INTEGER, customer_name TEXT, city TEXT,
+    order_date TEXT, order_datetime TEXT, delivery_date TEXT, amount REAL
+  );`);
+  const stmt = db.prepare("INSERT INTO orders VALUES (?,?,?,?,?,?,?)");
+  ORDERS.forEach(row => { stmt.run(row); });
+  stmt.free();
+
+  db.create_function('YEAR', fnYear);
+  db.create_function('MONTH', fnMonth);
+  db.create_function('DAY', fnDay);
+  db.create_function('DAYNAME', fnDayName);
+  db.create_function('DAYOFWEEK', fnDayOfWeek);
+  db.create_function('QUARTER', fnQuarter);
+  db.create_function('WEEK', fnWeek);
+  db.create_function('HOUR', fnHour);
+  db.create_function('MINUTE', fnMinute);
+  db.create_function('SECOND', fnSecond);
+  db.create_function('DATEDIFF', fnDateDiff);
+  db.create_function('DATE_FORMAT', fnDateFormat);
+  db.create_function('EXTRACTPART', fnExtractPart);
+
+  document.getElementById('loading').style.display = 'none';
+  document.getElementById('app').style.display = 'block';
+  buildCategoryChips();
+  renderQuestion();
+}).catch(err => {
+  document.getElementById('loading').textContent = 'SQL engine load nahi hua — internet connection check karo. (' + err.message + ')';
+});
+
+/* ---------------- EXEC / COMPARE ---------------- */
+function execSQL(rawSql){
+  const trimmed = rawSql.trim();
+  if(!trimmed) return {ok:false, error:'Query khali hai.'};
+  if(!/^select/i.test(trimmed)) return {ok:false, error:'Sirf SELECT queries chalengi is practice tool me.'};
+  try{
+    const processed = preprocess(trimmed.replace(/;\s*$/, ''));
+    const res = db.exec(processed);
+    if(res.length === 0) return {ok:true, columns:[], values:[]};
+    return {ok:true, columns:res[0].columns, values:res[0].values};
+  }catch(e){
+    return {ok:false, error: e.message};
+  }
+}
+
+function resultsEqual(a, b){
+  if(a.columns.length && b.columns.length && a.columns.length !== b.columns.length) return false;
+  const norm = rows => rows.map(r => JSON.stringify(r.map(v => (v===null? 'NULL' : String(v))))).sort();
+  return JSON.stringify(norm(a.values)) === JSON.stringify(norm(b.values));
+}
+
+function renderTable(container, columns, values){
+  if(!columns.length && !values.length){
+    container.innerHTML = '<div style="padding:12px;color:var(--ink-dim);font-size:13px;">Koi row nahi mili.</div>';
+    return;
+  }
+  let html = '<table class="out"><thead><tr>';
+  columns.forEach(c => html += `<th>${c}</th>`);
+  html += '</tr></thead><tbody>';
+  values.forEach(row => {
+    html += '<tr>' + row.map(v => `<td>${v===null? 'NULL': v}</td>`).join('') + '</tr>';
+  });
+  html += '</tbody></table>';
+  container.innerHTML = html;
+}
+
+/* ---------------- UI ---------------- */
+function buildCategoryChips(){
+  const cats = [...new Set(QUESTIONS.map(q=>q.cat))];
+  const box = document.getElementById('cats');
+  box.innerHTML = '';
+  cats.forEach(c => {
+    const chip = document.createElement('div');
+    chip.className = 'cat-chip';
+    chip.textContent = c;
+    chip.onclick = () => {
+      const idx = QUESTIONS.findIndex(q => q.cat === c);
+      if(idx >= 0){ current = idx; renderQuestion(); }
+    };
+    box.appendChild(chip);
+  });
+}
+
+function updateActiveChip(){
+  const chips = document.querySelectorAll('.cat-chip');
+  chips.forEach(ch => ch.classList.toggle('active', ch.textContent === QUESTIONS[current].cat));
+}
+
+function renderQuestion(){
+  const q = QUESTIONS[current];
+  document.getElementById('qnum').textContent = String(current+1).padStart(2,'0');
+  document.getElementById('qof').textContent = `of ${QUESTIONS.length}`;
+  document.getElementById('qcat').textContent = q.cat;
+  document.getElementById('qprompt').textContent = q.prompt;
+  document.getElementById('panelHint').textContent = q.hint;
+  document.getElementById('panelHint').classList.remove('show');
+  document.getElementById('panelSchema').classList.remove('show');
+  document.getElementById('query').value = '';
+  document.getElementById('verdict').className = 'verdict';
+  document.getElementById('verdict').textContent = '';
+  document.getElementById('blockYourOutput').style.display = 'none';
+  document.getElementById('blockAnswer').style.display = 'none';
+  updateActiveChip();
+  updateStats();
+}
+
+document.getElementById('btnSchema').onclick = () => document.getElementById('panelSchema').classList.toggle('show');
+document.getElementById('btnHint').onclick = () => document.getElementById('panelHint').classList.toggle('show');
+
+document.getElementById('btnRun').onclick = () => {
+  const q = QUESTIONS[current];
+  const userSql = document.getElementById('query').value;
+  const userRes = execSQL(userSql);
+  const verdict = document.getElementById('verdict');
+  const block = document.getElementById('blockYourOutput');
+
+  attempted.add(current);
+
+  if(!userRes.ok){
+    verdict.className = 'verdict show err';
+    verdict.textContent = '⚠ Query error: ' + userRes.error;
+    block.style.display = 'none';
+    updateStats();
+    return;
+  }
+
+  block.style.display = 'block';
+  renderTable(document.getElementById('yourOutput'), userRes.columns, userRes.values);
+
+  const correctRes = execSQL(q.answer);
+  const isRight = correctRes.ok && resultsEqual(userRes, correctRes);
+
+  if(isRight){
+    correct.add(current);
+    verdict.className = 'verdict show ok';
+    verdict.textContent = '✓ Sahi hai! Output match ho gaya.';
+  }else{
+    correct.delete(current);
+    verdict.className = 'verdict show no';
+    verdict.textContent = '✗ Abhi match nahi hua — "Answer dekho" dabakar compare karo.';
+  }
+  updateStats();
+};
+
+document.getElementById('btnAnswer').onclick = () => {
+  const q = QUESTIONS[current];
+  document.getElementById('answerSql').textContent = q.answer;
+  const ansRes = execSQL(q.answer);
+  renderTable(document.getElementById('answerOutput'), ansRes.columns, ansRes.values);
+  document.getElementById('blockAnswer').style.display = 'block';
+};
+
+document.getElementById('btnPrev').onclick = () => { current = (current - 1 + QUESTIONS.length) % QUESTIONS.length; renderQuestion(); };
+document.getElementById('btnNext').onclick = () => { current = (current + 1) % QUESTIONS.length; renderQuestion(); };
+
+document.getElementById('btnReset').onclick = () => {
+  attempted.clear(); correct.clear(); updateStats();
+};
+
+function updateStats(){
+  document.getElementById('statsText').textContent = `${attempted.size}/${QUESTIONS.length} attempt, ${correct.size} sahi`;
+}
+</script>
+</body>
+</html>
